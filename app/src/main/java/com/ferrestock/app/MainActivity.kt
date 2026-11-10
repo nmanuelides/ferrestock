@@ -144,7 +144,7 @@ private fun MainNav() {
     }
 }
 
-private const val NAV_MS = 480
+private const val NAV_MS = 260
 
 private fun <T> navTween() = tween<T>(NAV_MS, easing = FastOutSlowInEasing)
 
@@ -190,7 +190,7 @@ private fun MotionBlur(scope: AnimatedVisibilityScope, content: @Composable () -
                 val speed = sqrt(sin(PI * progress.coerceIn(0f, 1f))).toFloat()
                 // Radio fijo en dp (no depende del tamaño que informe la capa, que puede llegar en 0).
                 val radius = (if (onTop) 72.dp else 14.dp).toPx() * speed
-                renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Clamp) else null
+                renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Decal) else null
             }
             .drawWithContent {
                 drawContent()
@@ -199,7 +199,7 @@ private fun MotionBlur(scope: AnimatedVisibilityScope, content: @Composable () -
                 val onTop = entering != NavMotion.popping
                 if (!onTop) {
                     val covered = if (entering) 1f - progress else progress
-                    drawRect(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.35f * covered.coerceIn(0f, 1f)))
+                    drawRect(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.2f * covered.coerceIn(0f, 1f)))
                 }
             }
     ) { content() }
