@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -60,8 +61,8 @@ fun SheetScaffold(
     headerExtra: (@Composable () -> Unit)? = null,
     bottomBar: @Composable () -> Unit = {},
     fab: @Composable () -> Unit = {},
-    /** Fondo de la hoja en vez del color liso (la home usa un degradé hacia la barra verde). */
-    sheetBrush: Brush? = null,
+    /** Fondo de la hoja: por defecto el degradé lima → verde que termina en la barra de abajo. */
+    sheetBrush: Brush? = SheetGradient,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -150,7 +151,7 @@ fun SheetScaffold(
 /** Barra inferior para las acciones principales, al alcance del pulgar. */
 @Composable
 fun BottomActions(content: @Composable RowScope.() -> Unit) {
-    Surface(color = Navy) {
+    Surface(color = Teal) {
         CompositionLocalProvider(LocalOnDark provides true) {
         Row(
             Modifier
@@ -165,8 +166,15 @@ fun BottomActions(content: @Composable RowScope.() -> Unit) {
     }
 }
 
-/** true dentro de superficies oscuras (barra de acciones), para que los botones contrasten. */
+/** true dentro de la barra verde de acciones, para que los botones contrasten con ella. */
 val LocalOnDark = staticCompositionLocalOf { false }
+
+/** Fondo de las hojas: del verde clarito (arriba) al verde de la barra de abajo, sin corte. */
+val SheetGradient = Brush.verticalGradient(
+    0f to Lime,
+    0.5f to lerp(Lime, Teal, 0.18f),
+    1f to Teal,
+)
 
 @Composable
 fun PrimaryButton(
@@ -176,7 +184,7 @@ fun PrimaryButton(
     enabled: Boolean = true,
     loading: Boolean = false,
     icon: ImageVector? = null,
-    container: Color = Teal,
+    container: Color = if (LocalOnDark.current) Navy else Teal,
     contentColor: Color = Color.White,
 ) {
     Button(
@@ -216,8 +224,8 @@ fun SecondaryButton(
         modifier = modifier.height(56.dp),
         enabled = enabled,
         shape = RoundedCornerShape(18.dp),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (LocalOnDark.current) Lime else Blue),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (LocalOnDark.current) Lime else Blue),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (LocalOnDark.current) Color.White else Blue),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (LocalOnDark.current) Color.White else Blue),
     ) {
         if (icon != null) {
             Icon(icon, null, Modifier.size(20.dp))
@@ -547,7 +555,7 @@ fun SectionLabel(text: String, modifier: Modifier = Modifier) {
         modifier = modifier,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
-        color = Teal,
+        color = Navy,
         letterSpacing = androidx.compose.ui.unit.TextUnit(1.2f, androidx.compose.ui.unit.TextUnitType.Sp),
     )
 }

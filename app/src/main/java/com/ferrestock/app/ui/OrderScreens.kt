@@ -15,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -70,9 +71,9 @@ fun NewOrderScreen(vm: AppViewModel, onBack: () -> Unit, onCreated: (String) -> 
                     Text(
                         if (cartCount == 1) "1 producto" else "$cartCount productos",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Navy,
+                        color = Color.White,
                     )
-                    Text("$cartUnits en total", style = MaterialTheme.typography.bodySmall, color = Muted)
+                    Text("$cartUnits en total", style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.85f))
                 }
                 PrimaryButton("Continuar", { confirming = true }, Modifier.weight(1f), enabled = cartCount > 0)
             }

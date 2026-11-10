@@ -6,7 +6,22 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraphBuilder
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,8 +90,17 @@ private fun MainNav() {
         nav.navigate(if (id == null) "productEdit" else "productEdit?id=$id")
     }
 
-    NavHost(nav, startDestination = "home") {
-        composable("home") {
+    // Barrido lateral en el sentido de la navegación: hacia adelante entra desde la derecha,
+    // al volver entra desde la izquierda. Sin fundido.
+    NavHost(
+        nav,
+        startDestination = "home",
+        enterTransition = { slideIntoContainer(SlideDirection.Start, navTween()) },
+        exitTransition = { slideOutOfContainer(SlideDirection.Start, navTween()) },
+        popEnterTransition = { slideIntoContainer(SlideDirection.End, navTween()) },
+        popExitTransition = { slideOutOfContainer(SlideDirection.End, navTween()) },
+    ) {
+        screen("home") {
             HomeScreen(
                 vm = vm,
                 updates = updates,
@@ -86,17 +110,17 @@ private fun MainNav() {
                 onOpenOrder = { nav.navigate("order/$it") },
             )
         }
-        composable("product/{id}") { entry ->
+        screen("product/{id}") { entry ->
             val id = entry.arguments?.getString("id").orEmpty()
             ProductDetailScreen(vm, id, onBack = { nav.popBackStack() }, onEdit = { editProduct(id) })
         }
-        composable(
+        screen(
             "productEdit?id={id}",
             arguments = listOf(navArgument("id") { type = NavType.StringType; nullable = true; defaultValue = null }),
         ) { entry ->
             ProductEditScreen(vm, entry.arguments?.getString("id"), onDone = { nav.popBackStack() })
         }
-        composable("orderNew") {
+        screen("orderNew") {
             NewOrderScreen(
                 vm = vm,
                 onBack = { nav.popBackStack() },
@@ -105,8 +129,36 @@ private fun MainNav() {
                 },
             )
         }
-        composable("order/{id}") { entry ->
+        screen("order/{id}") { entry ->
             OrderDetailScreen(vm, entry.arguments?.getString("id").orEmpty(), onBack = { nav.popBackStack() })
         }
     }
+}
+
+private const val NAV_MS = 380
+
+private fun <T> navTween() = tween<T>(NAV_MS, easing = FastOutSlowInEasing)
+
+/** Igual que composable(), pero con desenfoque de movimiento horizontal durante el barrido. */
+private fun NavGraphBuilder.screen(
+    route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    content: @Composable (NavBackStackEntry) -> Unit,
+) = composable(route, arguments) { entry -> MotionBlur(this) { content(entry) } }
+
+/**
+ * Desenfoque solo en el eje X, más fuerte cuanto más lejos está la pantalla de su lugar:
+ * se lee como estela de movimiento lateral. Necesita Android 12+; antes queda solo el barrido.
+ */
+@Composable
+private fun MotionBlur(scope: AnimatedVisibilityScope, content: @Composable () -> Unit) {
+    val radius by scope.transition.animateFloat(
+        transitionSpec = { navTween() },
+        label = "motionBlur",
+    ) { state -> if (state == EnterExitState.Visible) 0f else 60f }
+    Box(
+        Modifier
+            .fillMaxSize()
+            .graphicsLayer { renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Decal) else null }
+    ) { content() }
 }
