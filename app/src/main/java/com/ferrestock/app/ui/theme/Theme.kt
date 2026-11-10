@@ -21,6 +21,7 @@ val Navy = Color(0xFF001A6E)
 val Blue = Color(0xFF074799)
 val Teal = Color(0xFF009990)
 val Lime = Color(0xFFE1FFBB)
+val NavyDeep = Color(0xFF000833)  // azul marino mucho más oscuro, para el degradé del encabezado
 
 // Derivados
 // El blanco queda para lo que se lee (tarjetas, campos, diálogos); el fondo es un gris

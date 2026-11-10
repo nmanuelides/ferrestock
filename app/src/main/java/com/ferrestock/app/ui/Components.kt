@@ -23,6 +23,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -67,13 +68,14 @@ fun SheetScaffold(
     }
 
     Scaffold(
-        containerColor = Navy,
+        containerColor = Navy,  // se ve en las esquinas redondeadas de la hoja: sigue al final del degradé
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = bottomBar,
         floatingActionButton = fab,
         topBar = {
             Column(
                 Modifier
+                    .background(Brush.verticalGradient(listOf(NavyDeep, Navy)))
                     .statusBarsPadding()
                     .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 18.dp)
             ) {
@@ -126,12 +128,13 @@ fun SheetScaffold(
                 .padding(top = padding.calculateTopPadding()),
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             color = Sheet,
+            shadowElevation = 16.dp,
         ) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .then(if (sheetBrush != null) Modifier.background(sheetBrush) else Modifier)
-                    .padding(bottom = padding.calculateBottomPadding()),
+                    .padding(bottom = padding.calculateBottomPadding())
+                    .then(if (sheetBrush != null) Modifier.background(sheetBrush) else Modifier),
                 content = content,
             )
         }
@@ -262,7 +265,9 @@ fun SearchField(value: String, onValueChange: (String) -> Unit, placeholder: Str
     TextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(10.dp, RoundedCornerShape(18.dp)),
         placeholder = { Text(placeholder, color = Muted) },
         leadingIcon = { Icon(Icons.Filled.Search, null, tint = Blue) },
         trailingIcon = {
