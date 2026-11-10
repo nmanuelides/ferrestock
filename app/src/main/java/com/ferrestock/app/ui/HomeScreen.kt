@@ -23,7 +23,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -174,17 +176,23 @@ fun HomeScreen(
                 }
             }
         },
+        // La hoja pasa del verde clarito (arriba) al verde de la barra (abajo), sin corte.
+        sheetBrush = Brush.verticalGradient(
+            0f to Lime,
+            0.5f to lerp(Lime, Teal, 0.18f),
+            1f to Teal,
+        ),
         headerExtra = if (tab == 0) {
             { SearchField(query, { query = it }, "Buscar producto…") }
         } else null,
         bottomBar = {
-            NavigationBar(containerColor = Navy, tonalElevation = 0.dp) {
+            NavigationBar(containerColor = Teal, tonalElevation = 0.dp) {
                 val colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Navy,
-                    selectedTextColor = Lime,
+                    selectedTextColor = Color.White,
                     indicatorColor = Lime,
-                    unselectedIconColor = Color.White.copy(alpha = 0.7f),
-                    unselectedTextColor = Color.White.copy(alpha = 0.7f),
+                    unselectedIconColor = Color.White.copy(alpha = 0.85f),
+                    unselectedTextColor = Color.White.copy(alpha = 0.85f),
                 )
                 NavigationBarItem(
                     selected = tab == 0, onClick = { tab = 0 }, colors = colors,
@@ -205,7 +213,7 @@ fun HomeScreen(
             when (tab) {
                 0 -> ExtendedFloatingActionButton(
                     onClick = onAddProduct,
-                    containerColor = Teal,
+                    containerColor = Navy,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(20.dp),
                     icon = { Icon(Icons.Filled.Add, null) },
@@ -213,7 +221,7 @@ fun HomeScreen(
                 )
                 1 -> ExtendedFloatingActionButton(
                     onClick = onNewOrder,
-                    containerColor = Teal,
+                    containerColor = Navy,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(20.dp),
                     icon = { Icon(Icons.Filled.Add, null) },

@@ -23,6 +23,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -56,6 +57,8 @@ fun SheetScaffold(
     headerExtra: (@Composable () -> Unit)? = null,
     bottomBar: @Composable () -> Unit = {},
     fab: @Composable () -> Unit = {},
+    /** Fondo de la hoja en vez del color liso (la home usa un degradé hacia la barra verde). */
+    sheetBrush: Brush? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -127,6 +130,7 @@ fun SheetScaffold(
             Box(
                 Modifier
                     .fillMaxSize()
+                    .then(if (sheetBrush != null) Modifier.background(sheetBrush) else Modifier)
                     .padding(bottom = padding.calculateBottomPadding()),
                 content = content,
             )
@@ -510,7 +514,7 @@ fun EmptyState(icon: ImageVector, title: String, hint: String) {
             Modifier
                 .size(88.dp)
                 .clip(CircleShape)
-                .background(Lime),
+                .background(Color.White),
             contentAlignment = Alignment.Center,
         ) {
             Icon(icon, null, tint = Teal, modifier = Modifier.size(40.dp))
