@@ -174,11 +174,17 @@ fun HomeScreen(
                 }
             }
         },
-        headerExtra = if (tab == 0) {
-            { SearchField(query, { query = it }, "Buscar producto…") }
-        } else null,
         bottomBar = {
-            NavigationBar(containerColor = Teal, tonalElevation = 0.dp) {
+            // Buscador y "Agregar" juntos abajo a la derecha, sobre las pestañas. Con el teclado
+            // abierto las pestañas se esconden y el buscador sube pegado al teclado.
+            val typing = imeVisible()
+            Column(Modifier.imePadding()) {
+            if (tab == 0) {
+                BottomSearchRow(query, { query = it }, "Buscar producto…") {
+                    SquareActionButton(Icons.Filled.Add, "Agregar producto", onAddProduct)
+                }
+            }
+            if (!typing) NavigationBar(containerColor = Teal, tonalElevation = 0.dp) {
                 val colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Navy,
                     selectedTextColor = Color.White,
@@ -199,19 +205,12 @@ fun HomeScreen(
                     icon = { Icon(Icons.Outlined.History, null) }, label = { Text("Historial") },
                 )
             }
+            }
         },
         fab = {
             // Acción más usada de cada pestaña: abajo a la derecha.
+            // (En Productos, "Agregar" está al lado del buscador.)
             when (tab) {
-                0 -> ExtendedFloatingActionButton(
-                    onClick = onAddProduct,
-                    containerColor = Color.Transparent,
-                    contentColor = Color.White,
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.background(NavyButtonGradient, RoundedCornerShape(20.dp)),
-                    icon = { Icon(Icons.Filled.Add, null) },
-                    text = { Text("Agregar", style = MaterialTheme.typography.labelLarge) },
-                )
                 1 -> ExtendedFloatingActionButton(
                     onClick = onNewOrder,
                     containerColor = Color.Transparent,
@@ -238,7 +237,7 @@ fun HomeScreen(
                         if (filtered.isEmpty() && vm.loaded) {
                             item {
                                 if (query.isBlank()) {
-                                    EmptyState(Icons.Outlined.Inventory2, "Todavía no hay productos", "Tocá «Agregar» para cargar el primero.")
+                                    EmptyState(Icons.Outlined.Inventory2, "Todavía no hay productos", "Tocá «+», abajo a la derecha, para cargar el primero.")
                                 } else {
                                     EmptyState(Icons.Outlined.SearchOff, "Sin resultados", "No hay productos que coincidan con «$query».")
                                 }

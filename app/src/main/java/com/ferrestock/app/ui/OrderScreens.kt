@@ -69,9 +69,13 @@ fun NewOrderScreen(vm: AppViewModel, onBack: () -> Unit, onCreated: (String) -> 
         subtitle = "Elegí productos y cantidades",
         onBack = onBack,
         messages = vm.messages,
-        headerExtra = { SearchField(query, { query = it }, "Buscar producto…") },
         bottomBar = {
-            BottomActions {
+            // Buscador abajo, al alcance del pulgar; con el teclado abierto sube pegado a él y
+            // el resumen de la orden se esconde para dejar lugar a la lista.
+            val typing = imeVisible()
+            Column(Modifier.imePadding()) {
+            BottomSearchRow(query, { query = it }, "Buscar producto…")
+            if (!typing) BottomActions {
                 Column(Modifier.weight(1f)) {
                     Text(
                         if (cartCount == 1) "1 producto" else "$cartCount productos",
@@ -82,12 +86,11 @@ fun NewOrderScreen(vm: AppViewModel, onBack: () -> Unit, onCreated: (String) -> 
                 }
                 PrimaryButton("Continuar", { confirming = true }, Modifier.weight(1f), enabled = cartCount > 0)
             }
+            }
         },
     ) {
         LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .imePadding(),
+            Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {

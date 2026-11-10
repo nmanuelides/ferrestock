@@ -296,7 +296,51 @@ fun AppTextField(
     )
 }
 
-/** Buscador para el encabezado oscuro. */
+/**
+ * Buscador en la zona de abajo, sobre la barra verde: es lo que más se usa, así que va al
+ * alcance del pulgar. [trailing] es para la acción principal de la pantalla (abajo a la derecha).
+ */
+@Composable
+fun BottomSearchRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    trailing: @Composable RowScope.() -> Unit = {},
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Teal)
+            .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = if (imeVisible()) 12.dp else 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.weight(1f)) { SearchField(value, onValueChange, placeholder) }
+        trailing()
+    }
+}
+
+/** true mientras el teclado está abierto (para esconder lo que no hace falta y ganar lugar). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun imeVisible(): Boolean = WindowInsets.isImeVisible
+
+/** Botón cuadrado azul con un ícono, para la acción principal al lado del buscador. */
+@Composable
+fun SquareActionButton(icon: ImageVector, label: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(NavyButtonGradient)
+            .clickable(onClickLabel = label, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(icon, label, tint = Color.White, modifier = Modifier.size(28.dp))
+    }
+}
+
+/** Campo de búsqueda blanco (va sobre fondos oscuros o verdes). */
 @Composable
 fun SearchField(value: String, onValueChange: (String) -> Unit, placeholder: String) {
     TextField(
