@@ -1,0 +1,7 @@
+sdk.dir=C:/Android/sdk
+
+# Supabase > Project Settings > API
+SUPABASE_URL=https://xxxxxxxx.supabase.co
+SUPABASE_ANON_KEY=eyJ...
+# Google Cloud > Credentials > OAuth client ID de tipo "Web application"
+GOOGLE_WEB_CLIENT_ID=1234567890-xxxx.apps.googleusercontent.com

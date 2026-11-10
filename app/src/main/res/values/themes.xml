@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="navy">#001A6E</color>
+    <color name="blue">#074799</color>
+    <color name="teal">#009990</color>
+    <color name="lime">#E1FFBB</color>
+
+    <style name="Theme.Ferrestock" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/navy</item>
+        <item name="android:colorAccent">@color/teal</item>
+    </style>
+</resources>
