@@ -118,6 +118,28 @@ object Demo {
     }
 
     @Synchronized
+    fun deleteOrder(orderId: String) {
+        val order = state.orders.firstOrNull { it.id == orderId }
+            ?: throw IllegalStateException("La orden no existe o ya fue eliminada")
+        val note = listOf("${order.code} eliminada", order.description).filter { it.isNotBlank() }.joinToString(" · ")
+
+        // Igual que en Supabase: a un producto ya eliminado no se le devuelve stock.
+        var products = state.products
+        val moves = order.items.mapNotNull { item ->
+            val p = products.firstOrNull { it.id == item.productId } ?: return@mapNotNull null
+            val after = p.quantity + item.quantity
+            products = products.map { if (it.id == p.id) it.copy(quantity = after) else it }
+            log(p, "devolucion", item.quantity, after, note, orderId)
+        }
+        state = state.copy(
+            products = products,
+            movements = moves + state.movements,
+            orders = state.orders.filter { it.id != orderId },
+        )
+        save()
+    }
+
+    @Synchronized
     fun createOrder(description: String, items: Map<String, Int>): String {
         if (items.isEmpty()) throw IllegalStateException("La orden no tiene productos")
         // Todo o nada: primero se valida todo, después se descuenta.

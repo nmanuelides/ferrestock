@@ -41,7 +41,7 @@ data class Movement(
     /** true = entra stock, false = sale stock, null = no cambia la cantidad. */
     val incoming: Boolean?
         get() = when (type) {
-            "alta", "ingreso" -> true
+            "alta", "ingreso", "devolucion" -> true
             "retiro", "orden", "baja" -> false
             else -> null
         }
@@ -53,6 +53,7 @@ data class Movement(
             "alta" -> "$who agregó $productName ($quantity $unit)"
             "ingreso" -> "$who ingresó $quantity $unit de $productName"
             "retiro", "orden" -> "$who retiró $quantity $unit de $productName"
+            "devolucion" -> "$who devolvió $quantity $unit de $productName al stock"
             "edicion" -> "$who editó $productName"
             "baja" -> "$who eliminó $productName"
             else -> "$who modificó $productName"

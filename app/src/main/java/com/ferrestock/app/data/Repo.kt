@@ -22,6 +22,7 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.postgrest.query.filter.FilterOperator
 import io.github.jan.supabase.serializer.KotlinXSerializer
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
@@ -150,6 +151,7 @@ object Repo {
 
     suspend fun orders(): List<StockOrder> =
         if (demo) Demo.orders() else client.from("orders").select(Columns.raw("*, order_items(*)")) {
+            filter { filter("deleted_at", FilterOperator.IS, "null") }
             order("number", Order.DESCENDING)
             limit(200)
         }.decodeList()
@@ -223,6 +225,12 @@ object Repo {
     suspend fun deleteProduct(productId: String) {
         if (demo) return Demo.deleteProduct(productId)
         client.postgrest.rpc("delete_product", buildJsonObject { put("p_id", productId) })
+    }
+
+    /** Marca la orden como eliminada y devuelve al stock lo que consumió. */
+    suspend fun deleteOrder(orderId: String) {
+        if (demo) return Demo.deleteOrder(orderId)
+        client.postgrest.rpc("delete_order", buildJsonObject { put("p_order_id", orderId) })
     }
 
     /** Devuelve el id de la orden creada. */

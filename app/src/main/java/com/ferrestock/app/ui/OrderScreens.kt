@@ -3,6 +3,11 @@ package com.ferrestock.app.ui
 import android.content.ClipData
 import android.content.Intent
 import androidx.compose.foundation.background
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -170,12 +175,31 @@ fun OrderDetailScreen(vm: AppViewModel, orderId: String, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val order = vm.orders.firstOrNull { it.id == orderId }
     var exporting by remember { mutableStateOf(false) }
+    var menuOpen by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf(false) }
 
     SheetScaffold(
         title = order?.code ?: "Orden",
         subtitle = "Orden de retiro",
         onBack = onBack,
         messages = vm.messages,
+        actions = {
+            // Eliminar es sensible: arriba a la derecha, lejos del pulgar.
+            if (order != null) {
+                Box {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(Icons.Filled.MoreVert, "Más opciones", tint = Color.White)
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        DropdownMenuItem(
+                            text = { Text("Eliminar orden", color = Danger) },
+                            leadingIcon = { Icon(Icons.Outlined.Delete, null, tint = Danger) },
+                            onClick = { menuOpen = false; confirmDelete = true },
+                        )
+                    }
+                }
+            }
+        },
         bottomBar = {
             if (order != null) {
                 BottomActions {
@@ -276,5 +300,70 @@ fun OrderDetailScreen(vm: AppViewModel, orderId: String, onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (confirmDelete && order != null) {
+        val active = remember(vm.products) { vm.products.map { it.id }.toSet() }
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            containerColor = Color.White,
+            title = { Text("¿Eliminar ${order.code}?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Lo importante, resaltado: el stock vuelve.
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Lime)
+                            .border(1.5.dp, Teal, RoundedCornerShape(16.dp))
+                            .padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.Restore, null, tint = Teal, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                "El stock que usó esta orden vuelve al inventario",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = Navy,
+                            )
+                        }
+                        order.items.forEach { item ->
+                            val restorable = item.productId in active
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    if (restorable) "+${item.quantity} ${item.unit}" else "—",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = if (restorable) Teal else Muted,
+                                    modifier = Modifier.widthIn(min = 56.dp),
+                                )
+                                Text(
+                                    if (restorable) item.productName else "${item.productName} (producto eliminado, no se devuelve)",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (restorable) Navy else Muted,
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        "La orden deja de aparecer en la lista. En el historial queda registrado quién la eliminó.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted,
+                    )
+                }
+            },
+            // El botón destructivo no queda en la posición habitual de "aceptar".
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false }) { Text("Cancelar", color = Blue) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    confirmDelete = false
+                    vm.action({ Repo.deleteOrder(order.id) }) { onBack() }
+                }) { Text("Eliminar y devolver stock", color = Danger) }
+            },
+        )
     }
 }
