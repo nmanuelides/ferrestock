@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.SearchOff
@@ -27,11 +28,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ferrestock.app.AppViewModel
+import com.ferrestock.app.BuildConfig
 import com.ferrestock.app.data.Repo
 import com.ferrestock.app.data.StockOrder
 import com.ferrestock.app.data.formatDateTime
 import com.ferrestock.app.data.search
 import com.ferrestock.app.ui.theme.*
+import com.ferrestock.app.update.UpdateViewModel
 import kotlinx.coroutines.launch
 
 private val listPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 104.dp)
@@ -40,6 +43,7 @@ private val listPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 20.dp,
 @Composable
 fun HomeScreen(
     vm: AppViewModel,
+    updates: UpdateViewModel,
     onOpenProduct: (String) -> Unit,
     onAddProduct: () -> Unit,
     onNewOrder: () -> Unit,
@@ -50,6 +54,9 @@ fun HomeScreen(
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var query by rememberSaveable { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
+    var updateDialog by remember { mutableStateOf(false) }
+
+    if (updateDialog) UpdateDialog(updates) { updateDialog = false }
 
     LaunchedEffect(Unit) { vm.refresh() }
 
@@ -88,6 +95,19 @@ fun HomeScreen(
                         Text(vm.userEmail, style = MaterialTheme.typography.bodySmall, color = Muted)
                     }
                     HorizontalDivider(color = Line)
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text("Buscar actualizaciones")
+                                Text("Versión ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Muted)
+                            }
+                        },
+                        leadingIcon = { Icon(Icons.Filled.SystemUpdate, null) },
+                        onClick = {
+                            menuOpen = false
+                            updateDialog = true
+                        },
+                    )
                     DropdownMenuItem(
                         text = { Text(if (Repo.demo) "Reiniciar datos de ejemplo" else "Cerrar sesión") },
                         leadingIcon = { Icon(Icons.AutoMirrored.Filled.Logout, null) },
@@ -151,10 +171,12 @@ fun HomeScreen(
             }
         },
     ) {
+        Column(Modifier.fillMaxSize()) {
+        UpdateBanner(updates.state, updates::install)
         PullToRefreshBox(
             isRefreshing = vm.refreshing,
             onRefresh = vm::refresh,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxWidth().weight(1f),
         ) {
             when (tab) {
                 0 -> {
@@ -197,6 +219,7 @@ fun HomeScreen(
                     }
                 }
             }
+        }
         }
     }
 }

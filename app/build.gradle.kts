@@ -13,7 +13,18 @@ val localProps = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
-fun secret(key: String): String = "\"${(localProps.getProperty(key) ?: "").trim()}\""
+// En CI los valores llegan como variables de entorno (secrets del repo).
+fun secret(key: String): String = "\"${(localProps.getProperty(key) ?: System.getenv(key) ?: "").trim()}\""
+
+// La versión sale de git: versionCode = cantidad de commits (CI publica cada build como release
+// `build-<versionCode>` y la app compara contra eso para saber si hay una versión nueva).
+fun git(vararg args: String): String = runCatching {
+    providers.exec { commandLine("git", *args) }.standardOutput.asText.get().trim()
+}.getOrDefault("")
+
+val commitCount: Int = git("rev-list", "--count", "HEAD").toIntOrNull() ?: 1
+val gitSha: String = git("rev-parse", "--short=10", "HEAD")
+val appVersion = "1.$commitCount"
 
 android {
     namespace = "com.ferrestock.app"
@@ -23,17 +34,37 @@ android {
         applicationId = "com.ferrestock.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = commitCount
+        versionName = appVersion
 
         buildConfigField("String", "SUPABASE_URL", secret("SUPABASE_URL"))
         buildConfigField("String", "SUPABASE_ANON_KEY", secret("SUPABASE_ANON_KEY"))
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", secret("GOOGLE_WEB_CLIENT_ID"))
+        buildConfigField("String", "UPDATE_REPO", "\"nmanuelides/ferrestock\"")
+        buildConfigField("String", "GIT_SHA", "\"$gitSha\"")
+    }
+
+    signingConfigs {
+        // Las actualizaciones solo se instalan encima si vienen firmadas con la misma clave.
+        // CI la recibe por secrets; en local sale de local.properties. Sin ninguna, firma con debug.
+        create("release") {
+            fun signing(key: String): String? = System.getenv(key) ?: localProps.getProperty(key)?.trim()
+            val keystore = signing("RELEASE_KEYSTORE")?.let { rootProject.file(it) }
+            if (keystore != null && keystore.exists()) {
+                storeFile = keystore
+                storePassword = signing("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias = signing("RELEASE_KEY_ALIAS")
+                keyPassword = signing("RELEASE_KEY_PASSWORD")
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -86,3 +117,11 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
 }
+
+// Cada build release queda también en dist/ferrestock-v<versión>.apk (lo que CI publica).
+val distRelease by tasks.registering(Copy::class) {
+    from(layout.buildDirectory.file("outputs/apk/release/app-release.apk"))
+    into(rootProject.layout.projectDirectory.dir("dist"))
+    rename { "ferrestock-v$appVersion.apk" }
+}
+tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(distRelease) }

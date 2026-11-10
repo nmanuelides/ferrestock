@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -25,6 +26,7 @@ import com.ferrestock.app.ui.ProductDetailScreen
 import com.ferrestock.app.ui.ProductEditScreen
 import com.ferrestock.app.ui.SplashScreen
 import com.ferrestock.app.ui.theme.FerrestockTheme
+import com.ferrestock.app.update.UpdateViewModel
 import io.github.jan.supabase.auth.status.SessionStatus
 
 class MainActivity : ComponentActivity() {
@@ -58,7 +60,14 @@ private fun AppRoot() {
 @Composable
 private fun MainNav() {
     val vm: AppViewModel = viewModel()
+    val updates: UpdateViewModel = viewModel()
     val nav = rememberNavController()
+
+    // Busca versiones nuevas al abrir la app y cada vez que se vuelve a ella.
+    LifecycleResumeEffect(Unit) {
+        updates.checkInBackground()
+        onPauseOrDispose { }
+    }
 
     fun editProduct(id: String?) {
         vm.pendingPhoto = null
@@ -69,6 +78,7 @@ private fun MainNav() {
         composable("home") {
             HomeScreen(
                 vm = vm,
+                updates = updates,
                 onOpenProduct = { nav.navigate("product/$it") },
                 onAddProduct = { editProduct(null) },
                 onNewOrder = { nav.navigate("orderNew") },
