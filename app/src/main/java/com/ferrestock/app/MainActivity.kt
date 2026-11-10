@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.drawWithContent
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlin.math.sqrt
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
@@ -142,7 +144,7 @@ private fun MainNav() {
     }
 }
 
-private const val NAV_MS = 420
+private const val NAV_MS = 480
 
 private fun <T> navTween() = tween<T>(NAV_MS, easing = FastOutSlowInEasing)
 
@@ -184,8 +186,10 @@ private fun MotionBlur(scope: AnimatedVisibilityScope, content: @Composable () -
             .graphicsLayer {
                 val progress = if (entering) position else position - 1f
                 val onTop = entering != NavMotion.popping
-                val speed = sin(PI * progress.coerceIn(0f, 1f)).toFloat()
-                val radius = size.width * (if (onTop) 0.07f else 0.015f) * speed
+                // Curva aplanada: el desenfoque sube rápido y se sostiene casi todo el recorrido.
+                val speed = sqrt(sin(PI * progress.coerceIn(0f, 1f))).toFloat()
+                // Radio fijo en dp (no depende del tamaño que informe la capa, que puede llegar en 0).
+                val radius = (if (onTop) 72.dp else 14.dp).toPx() * speed
                 renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Clamp) else null
             }
             .drawWithContent {
