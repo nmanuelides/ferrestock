@@ -6,7 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawWithContent
+import kotlin.math.PI
+import kotlin.math.sin
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -90,15 +96,16 @@ private fun MainNav() {
         nav.navigate(if (id == null) "productEdit" else "productEdit?id=$id")
     }
 
-    // Barrido lateral en el sentido de la navegación: hacia adelante entra desde la derecha,
-    // al volver entra desde la izquierda. Sin fundido.
+    // Una pantalla barre a la otra: al avanzar la nueva entra desde la derecha por encima de
+    // la actual (que se corre un poco y se oscurece); al volver, la de arriba sale hacia la
+    // derecha y descubre la anterior. Sin fundido.
     NavHost(
         nav,
         startDestination = "home",
-        enterTransition = { slideIntoContainer(SlideDirection.Start, navTween()) },
-        exitTransition = { slideOutOfContainer(SlideDirection.Start, navTween()) },
-        popEnterTransition = { slideIntoContainer(SlideDirection.End, navTween()) },
-        popExitTransition = { slideOutOfContainer(SlideDirection.End, navTween()) },
+        enterTransition = { NavMotion.popping = false; slideInHorizontally(navTween()) { it } },
+        exitTransition = { slideOutHorizontally(navTween()) { -it / 4 } },
+        popEnterTransition = { NavMotion.popping = true; slideInHorizontally(navTween()) { -it / 4 } },
+        popExitTransition = { slideOutHorizontally(navTween()) { it } },
     ) {
         screen("home") {
             HomeScreen(
@@ -135,11 +142,16 @@ private fun MainNav() {
     }
 }
 
-private const val NAV_MS = 380
+private const val NAV_MS = 420
 
 private fun <T> navTween() = tween<T>(NAV_MS, easing = FastOutSlowInEasing)
 
-/** Igual que composable(), pero con desenfoque de movimiento horizontal durante el barrido. */
+/** Sentido de la navegación en curso (lo fijan las transiciones del NavHost al arrancar). */
+private object NavMotion {
+    var popping by mutableStateOf(false)
+}
+
+/** Igual que composable(), pero con desenfoque de movimiento durante el barrido. */
 private fun NavGraphBuilder.screen(
     route: String,
     arguments: List<NamedNavArgument> = emptyList(),
@@ -147,18 +159,44 @@ private fun NavGraphBuilder.screen(
 ) = composable(route, arguments) { entry -> MotionBlur(this) { content(entry) } }
 
 /**
- * Desenfoque solo en el eje X, más fuerte cuanto más lejos está la pantalla de su lugar:
- * se lee como estela de movimiento lateral. Necesita Android 12+; antes queda solo el barrido.
+ * Desenfoque horizontal que sigue la velocidad del barrido: nulo al arrancar y al terminar,
+ * máximo a mitad de camino, sobre toda la pantalla. La que barre (arriba) se desenfoca
+ * fuerte; la de abajo, que apenas se corre, poco, y además se oscurece al quedar tapada.
+ * El desenfoque necesita Android 12+; antes queda el barrido solo.
  */
 @Composable
 private fun MotionBlur(scope: AnimatedVisibilityScope, content: @Composable () -> Unit) {
-    val radius by scope.transition.animateFloat(
+    // 0 = fuera (antes de entrar), 1 = en su lugar, 2 = fuera (después de salir).
+    val position by scope.transition.animateFloat(
         transitionSpec = { navTween() },
-        label = "motionBlur",
-    ) { state -> if (state == EnterExitState.Visible) 0f else 60f }
+        label = "navPosition",
+    ) { state ->
+        when (state) {
+            EnterExitState.PreEnter -> 0f
+            EnterExitState.Visible -> 1f
+            EnterExitState.PostExit -> 2f
+        }
+    }
+    val entering = scope.transition.targetState == EnterExitState.Visible
     Box(
         Modifier
             .fillMaxSize()
-            .graphicsLayer { renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Decal) else null }
+            .graphicsLayer {
+                val progress = if (entering) position else position - 1f
+                val onTop = entering != NavMotion.popping
+                val speed = sin(PI * progress.coerceIn(0f, 1f)).toFloat()
+                val radius = size.width * (if (onTop) 0.07f else 0.015f) * speed
+                renderEffect = if (radius > 0.5f) BlurEffect(radius, 0f, TileMode.Clamp) else null
+            }
+            .drawWithContent {
+                drawContent()
+                // La pantalla de abajo se oscurece a medida que la tapa la otra.
+                val progress = if (entering) position else position - 1f
+                val onTop = entering != NavMotion.popping
+                if (!onTop) {
+                    val covered = if (entering) 1f - progress else progress
+                    drawRect(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.35f * covered.coerceIn(0f, 1f)))
+                }
+            }
     ) { content() }
 }
