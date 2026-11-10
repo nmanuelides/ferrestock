@@ -16,8 +16,10 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -135,7 +137,8 @@ fun SheetScaffold(
 /** Barra inferior para las acciones principales, al alcance del pulgar. */
 @Composable
 fun BottomActions(content: @Composable RowScope.() -> Unit) {
-    Surface(color = Color.White, shadowElevation = 12.dp) {
+    Surface(color = Navy) {
+        CompositionLocalProvider(LocalOnDark provides true) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -145,8 +148,12 @@ fun BottomActions(content: @Composable RowScope.() -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             content = content,
         )
+        }
     }
 }
+
+/** true dentro de superficies oscuras (barra de acciones), para que los botones contrasten. */
+val LocalOnDark = staticCompositionLocalOf { false }
 
 @Composable
 fun PrimaryButton(
@@ -196,8 +203,8 @@ fun SecondaryButton(
         modifier = modifier.height(56.dp),
         enabled = enabled,
         shape = RoundedCornerShape(18.dp),
-        border = androidx.compose.foundation.BorderStroke(1.5.dp, Blue),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = Blue),
+        border = androidx.compose.foundation.BorderStroke(1.5.dp, if (LocalOnDark.current) Lime else Blue),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = if (LocalOnDark.current) Lime else Blue),
     ) {
         if (icon != null) {
             Icon(icon, null, Modifier.size(20.dp))

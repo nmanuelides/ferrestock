@@ -23,9 +23,11 @@ val Teal = Color(0xFF009990)
 val Lime = Color(0xFFE1FFBB)
 
 // Derivados
-val Sheet = Color(0xFFF6FAF0)      // fondo claro de las "hojas", blanco con un toque de lima
-val Muted = Color(0xFF5A678F)      // texto secundario
-val Line = Color(0xFFD5DCEC)       // bordes y divisores
+// El blanco queda para lo que se lee (tarjetas, campos, diálogos); el fondo es un gris
+// azulado apagado para que la pantalla no encandile y las tarjetas se despeguen.
+val Sheet = Color(0xFFDCE2EC)      // fondo de las "hojas"
+val Muted = Color(0xFF4A5680)      // texto secundario (contraste suficiente sobre Sheet y blanco)
+val Line = Color(0xFFC5CEDE)       // bordes y divisores
 val Danger = Color(0xFFC62828)
 val DangerSoft = Color(0xFFFFE3E0)
 

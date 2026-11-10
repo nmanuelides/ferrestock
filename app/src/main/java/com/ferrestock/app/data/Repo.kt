@@ -1,6 +1,9 @@
 package com.ferrestock.app.data
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
@@ -9,6 +12,7 @@ import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.SignOutScope
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.Google
 import io.github.jan.supabase.auth.providers.builtin.IDToken
@@ -24,6 +28,8 @@ import io.github.jan.supabase.storage.storage
 import java.security.MessageDigest
 import java.util.UUID
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -92,6 +98,32 @@ object Repo {
     suspend fun signOut(context: Context) {
         if (demo) return Demo.reset()
         client.auth.signOut()
+        runCatching { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
+    }
+
+    /** Aviso para la pantalla de login (por ejemplo, cuenta desactivada). */
+    var loginMessage by mutableStateOf<String?>(null)
+
+    /** Si la cuenta está habilitada (perfil activo). */
+    suspend fun isMember(): Boolean =
+        demo || client.postgrest.rpc("is_member").decodeAs<JsonPrimitive>().boolean
+
+    /** Cierra la sesión de una cuenta desactivada o eliminada y avisa en el login. */
+    suspend fun signOutInactive() {
+        loginMessage = "Esta cuenta fue eliminada o desactivada. Si fue un error, pedí que la reactiven."
+        runCatching { client.auth.signOut(SignOutScope.LOCAL) }
+    }
+
+    /**
+     * "Eliminar cuenta": la desactiva en Supabase (se conserva para la trazabilidad
+     * del historial), cierra todas sus sesiones y la del teléfono.
+     */
+    suspend fun deleteAccount(context: Context) {
+        if (demo) return Demo.reset()
+        client.postgrest.rpc("delete_my_account")
+        loginMessage = "Tu cuenta fue eliminada."
+        // Las sesiones ya se cerraron en el servidor: alcanza con borrar la local.
+        runCatching { client.auth.signOut(SignOutScope.LOCAL) }
         runCatching { CredentialManager.create(context).clearCredentialState(ClearCredentialStateRequest()) }
     }
 

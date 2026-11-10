@@ -58,7 +58,7 @@ fun LoginScreen() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf(Repo.loginMessage) }
 
     Column(
         Modifier
@@ -98,6 +98,7 @@ fun LoginScreen() {
                 text = "Continuar con Google",
                 onClick = {
                     error = null
+                    Repo.loginMessage = null
                     loading = true
                     scope.launch {
                         try {

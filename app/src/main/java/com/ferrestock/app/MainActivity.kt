@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            // Las barras de abajo son azul marino: íconos del sistema claros.
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         if (Repo.demo) Demo.init(applicationContext)
         setContent {

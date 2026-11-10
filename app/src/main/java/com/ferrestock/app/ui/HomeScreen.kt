@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.outlined.PersonRemove
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.SearchOff
@@ -57,6 +58,46 @@ fun HomeScreen(
     var updateDialog by remember { mutableStateOf(false) }
 
     if (updateDialog) UpdateDialog(updates) { updateDialog = false }
+
+    var confirmDelete by remember { mutableStateOf(false) }
+    var deleting by remember { mutableStateOf(false) }
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { if (!deleting) confirmDelete = false },
+            containerColor = Color.White,
+            icon = { Icon(Icons.Outlined.PersonRemove, null, tint = Danger) },
+            title = { Text("¿Eliminar tu cuenta?") },
+            text = {
+                Text(
+                    "Perdés el acceso a Ferrestock y se cierra la sesión en todos tus dispositivos. " +
+                        "Lo que hiciste queda en el historial con tu nombre, como registro del stock. " +
+                        "Para volver a entrar, alguien con acceso al panel tiene que reactivar tu cuenta."
+                )
+            },
+            // El botón destructivo no queda en la posición habitual de "aceptar".
+            confirmButton = {
+                TextButton(onClick = { confirmDelete = false }, enabled = !deleting) { Text("Cancelar", color = Blue) }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !deleting,
+                    onClick = {
+                        deleting = true
+                        scope.launch {
+                            runCatching { Repo.deleteAccount(context) }
+                                .onSuccess { vm.clearSession() }
+                                .onFailure { vm.messages.tryEmit(AppViewModel.friendly(it)) }
+                            deleting = false
+                            confirmDelete = false
+                        }
+                    },
+                ) {
+                    if (deleting) CircularProgressIndicator(Modifier.size(18.dp), color = Danger, strokeWidth = 2.dp)
+                    else Text("Eliminar cuenta", color = Danger, fontWeight = FontWeight.Bold)
+                }
+            },
+        )
+    }
 
     LaunchedEffect(Unit) { vm.refresh() }
 
@@ -120,6 +161,16 @@ fun HomeScreen(
                             }
                         },
                     )
+                    if (!Repo.demo) {
+                        DropdownMenuItem(
+                            text = { Text("Eliminar cuenta", color = Danger) },
+                            leadingIcon = { Icon(Icons.Outlined.PersonRemove, null, tint = Danger) },
+                            onClick = {
+                                menuOpen = false
+                                confirmDelete = true
+                            },
+                        )
+                    }
                 }
             }
         },
@@ -127,13 +178,13 @@ fun HomeScreen(
             { SearchField(query, { query = it }, "Buscar producto…") }
         } else null,
         bottomBar = {
-            NavigationBar(containerColor = Color.White, tonalElevation = 0.dp) {
+            NavigationBar(containerColor = Navy, tonalElevation = 0.dp) {
                 val colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Navy,
-                    selectedTextColor = Navy,
+                    selectedTextColor = Lime,
                     indicatorColor = Lime,
-                    unselectedIconColor = Muted,
-                    unselectedTextColor = Muted,
+                    unselectedIconColor = Color.White.copy(alpha = 0.7f),
+                    unselectedTextColor = Color.White.copy(alpha = 0.7f),
                 )
                 NavigationBarItem(
                     selected = tab == 0, onClick = { tab = 0 }, colors = colors,

@@ -62,6 +62,11 @@ class AppViewModel : ViewModel() {
     }
 
     private suspend fun reload() = coroutineScope {
+        // Una cuenta desactivada (o eliminada) no ve nada: se la saca a la pantalla de login.
+        if (!Repo.isMember()) {
+            Repo.signOutInactive()
+            return@coroutineScope
+        }
         val p = async { Repo.products() }
         val m = async { Repo.movements() }
         val o = async { Repo.orders() }
