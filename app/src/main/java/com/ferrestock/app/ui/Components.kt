@@ -23,7 +23,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -125,10 +127,14 @@ fun SheetScaffold(
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = padding.calculateTopPadding()),
+                .padding(top = padding.calculateTopPadding())
+                // Sombra hacia arriba, sobre el encabezado: la hoja se despega del azul.
+                .dropShadow(
+                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+                    Shadow(radius = 28.dp, color = Color.Black.copy(alpha = 0.75f), offset = DpOffset(0.dp, (-8).dp)),
+                ),
             shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
             color = Sheet,
-            shadowElevation = 16.dp,
         ) {
             Box(
                 Modifier
@@ -267,7 +273,10 @@ fun SearchField(value: String, onValueChange: (String) -> Unit, placeholder: Str
         onValueChange = onValueChange,
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(10.dp, RoundedCornerShape(18.dp)),
+            .dropShadow(
+                RoundedCornerShape(18.dp),
+                Shadow(radius = 18.dp, color = Color.Black.copy(alpha = 0.7f), offset = DpOffset(0.dp, 8.dp)),
+            ),
         placeholder = { Text(placeholder, color = Muted) },
         leadingIcon = { Icon(Icons.Filled.Search, null, tint = Blue) },
         trailingIcon = {
