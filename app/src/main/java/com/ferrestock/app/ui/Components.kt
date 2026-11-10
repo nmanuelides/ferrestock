@@ -63,6 +63,8 @@ fun SheetScaffold(
     fab: @Composable () -> Unit = {},
     /** Fondo de la hoja: por defecto el degradé lima → verde que termina en la barra de abajo. */
     sheetBrush: Brush? = SheetGradient,
+    /** Para toda la pantalla (por ejemplo, desenfocarla detrás de un modal). */
+    modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val snackbar = remember { SnackbarHostState() }
@@ -72,7 +74,7 @@ fun SheetScaffold(
 
     // Fondo azul de toda la pantalla: muy oscuro arriba y se aclara hacia abajo, siguiendo
     // por debajo de la hoja (se ve en sus esquinas redondeadas), sin cortarse en el encabezado.
-    Box(Modifier.fillMaxSize().background(ScreenGradient)) {
+    Box(modifier.fillMaxSize().background(ScreenGradient)) {
     Scaffold(
         containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbar) },

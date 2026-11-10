@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -48,6 +50,27 @@ fun ProductEditScreen(vm: AppViewModel, productId: String?, onDone: () -> Unit) 
     var minStock by rememberSaveable { mutableStateOf(existing?.minStock?.takeIf { it > 0 }?.toString() ?: "") }
     var description by rememberSaveable { mutableStateOf(existing?.description ?: "") }
     var cameraUri by rememberSaveable { mutableStateOf<String?>(null) }
+    var pickingUnit by remember { mutableStateOf(false) }
+    // Unidades creadas en esta pantalla, antes de guardar el producto.
+    var createdUnits by rememberSaveable { mutableStateOf(listOf<String>()) }
+    val units = remember(vm.products, createdUnits, unit) {
+        unitOptions(vm.products.map { it.unit } + createdUnits, unit)
+    }
+    // Mientras el selector está abierto, la pantalla de atrás se desenfoca.
+    val backgroundBlur by animateDpAsState(if (pickingUnit) 16.dp else 0.dp, label = "unitBlur")
+
+    if (pickingUnit) {
+        UnitPickerDialog(
+            options = units,
+            selected = unit,
+            onSelect = { chosen ->
+                if (units.none { it.equals(chosen, ignoreCase = true) }) createdUnits = createdUnits + chosen
+                unit = chosen
+                pickingUnit = false
+            },
+            onDismiss = { pickingUnit = false },
+        )
+    }
 
     fun usePhoto(uri: Uri) {
         scope.launch {
@@ -72,6 +95,7 @@ fun ProductEditScreen(vm: AppViewModel, productId: String?, onDone: () -> Unit) 
         title = if (existing == null) "Nuevo producto" else "Editar producto",
         onBack = onDone,
         messages = vm.messages,
+        modifier = Modifier.blur(backgroundBlur),
         bottomBar = {
             BottomActions {
                 PrimaryButton(
@@ -152,7 +176,7 @@ fun ProductEditScreen(vm: AppViewModel, productId: String?, onDone: () -> Unit) 
                 if (existing == null) {
                     AppTextField(quantity, { quantity = it }, "Cantidad inicial", Modifier.weight(1f), number = true)
                 }
-                AppTextField(unit, { unit = it.take(12) }, "Unidad", Modifier.weight(1f), placeholder = "u, m, kg, caja…")
+                UnitField(unit, onClick = { pickingUnit = true }, modifier = Modifier.weight(1f))
             }
 
             AppTextField(category, { category = it.take(40) }, "Categoría (opcional)", placeholder = "Ej.: Iluminación")
