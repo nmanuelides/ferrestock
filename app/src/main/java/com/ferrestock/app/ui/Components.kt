@@ -70,15 +70,17 @@ fun SheetScaffold(
         LaunchedEffect(messages) { messages.collect { snackbar.showSnackbar(it) } }
     }
 
+    // Fondo azul de toda la pantalla: muy oscuro arriba y se aclara hacia abajo, siguiendo
+    // por debajo de la hoja (se ve en sus esquinas redondeadas), sin cortarse en el encabezado.
+    Box(Modifier.fillMaxSize().background(ScreenGradient)) {
     Scaffold(
-        containerColor = Navy,  // se ve en las esquinas redondeadas de la hoja: sigue al final del degradé
+        containerColor = Color.Transparent,
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = bottomBar,
         floatingActionButton = fab,
         topBar = {
             Column(
                 Modifier
-                    .background(Brush.verticalGradient(listOf(NavyDeep, Navy)))
                     .statusBarsPadding()
                     .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 18.dp)
             ) {
@@ -146,7 +148,18 @@ fun SheetScaffold(
             )
         }
     }
+    }
 }
+
+/** Fondo azul de las pantallas (detrás del encabezado y de la hoja). */
+val ScreenGradient = Brush.verticalGradient(
+    0f to NavyDeep,
+    0.3f to Navy,
+    1f to Blue,
+)
+
+/** Relleno de los botones azules: azul marino arriba a azul muy oscuro abajo. */
+val NavyButtonGradient = Brush.verticalGradient(listOf(Navy, NavyDeep))
 
 /** Barra inferior para las acciones principales, al alcance del pulgar. */
 @Composable
@@ -187,15 +200,23 @@ fun PrimaryButton(
     container: Color = if (LocalOnDark.current) Navy else Teal,
     contentColor: Color = Color.White,
 ) {
+    // Los botones azul marino llevan degradé; el resto, color liso.
+    val gradient = container == Navy
+    val active = enabled && !loading
     Button(
         onClick = onClick,
-        modifier = modifier.height(56.dp),
-        enabled = enabled && !loading,
+        modifier = modifier
+            .height(56.dp)
+            .then(
+                if (gradient) Modifier.background(NavyButtonGradient, RoundedCornerShape(18.dp), alpha = if (active) 1f else 0.45f)
+                else Modifier
+            ),
+        enabled = active,
         shape = RoundedCornerShape(18.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = container,
+            containerColor = if (gradient) Color.Transparent else container,
             contentColor = contentColor,
-            disabledContainerColor = container.copy(alpha = 0.45f),
+            disabledContainerColor = if (gradient) Color.Transparent else container.copy(alpha = 0.45f),
             disabledContentColor = contentColor.copy(alpha = 0.8f),
         ),
     ) {

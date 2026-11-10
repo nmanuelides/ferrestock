@@ -205,17 +205,19 @@ fun HomeScreen(
             when (tab) {
                 0 -> ExtendedFloatingActionButton(
                     onClick = onAddProduct,
-                    containerColor = Navy,
+                    containerColor = Color.Transparent,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.background(NavyButtonGradient, RoundedCornerShape(20.dp)),
                     icon = { Icon(Icons.Filled.Add, null) },
                     text = { Text("Agregar", style = MaterialTheme.typography.labelLarge) },
                 )
                 1 -> ExtendedFloatingActionButton(
                     onClick = onNewOrder,
-                    containerColor = Navy,
+                    containerColor = Color.Transparent,
                     contentColor = Color.White,
                     shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.background(NavyButtonGradient, RoundedCornerShape(20.dp)),
                     icon = { Icon(Icons.Filled.Add, null) },
                     text = { Text("Nueva orden", style = MaterialTheme.typography.labelLarge) },
                 )
