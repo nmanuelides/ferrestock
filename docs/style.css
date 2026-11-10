@@ -1,0 +1,68 @@
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap");
+
+:root {
+  --navy: #001a6e;
+  --blue: #074799;
+  --teal: #009990;
+  --lime: #e1ffbb;
+  --sheet: #f6faf0;
+  --muted: #5a678f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Outfit", system-ui, sans-serif;
+  background: var(--navy);
+  color: var(--navy);
+  line-height: 1.6;
+}
+
+header {
+  padding: 48px 16px 64px;
+  color: #fff;
+  text-align: center;
+}
+
+header .tag {
+  color: var(--lime);
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+header h1 { margin: 8px 0 0; font-size: 34px; }
+
+main {
+  background: var(--sheet);
+  border-radius: 32px 32px 0 0;
+  padding: 40px 16px 64px;
+  min-height: 60vh;
+}
+
+.wrap { max-width: 720px; margin: 0 auto; }
+
+h2 { color: var(--teal); font-size: 20px; margin-top: 32px; }
+
+a { color: var(--blue); }
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.muted { color: var(--muted); font-size: 14px; }
+
+nav a {
+  display: inline-block;
+  margin: 24px 12px 0 0;
+  padding: 12px 20px;
+  border-radius: 16px;
+  background: var(--teal);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
