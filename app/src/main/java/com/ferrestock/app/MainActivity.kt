@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.drawWithContent
 import kotlin.math.PI
@@ -74,9 +75,19 @@ private fun AppRoot() {
         return
     }
     val status by Repo.sessionStatus.collectAsStateWithLifecycle()
+    // Al volver de otra app (galería, cámara) Supabase recarga la sesión y pasa un instante por
+    // "Initializing". Si en ese instante se desmontara MainNav, se perdería la navegación y la app
+    // volvería al inicio. Por eso, una vez adentro, solo se sale con NotAuthenticated.
+    // Es saveable para que, si Android cerró el proceso, al volver se restaure la pantalla.
+    var signedIn by rememberSaveable { mutableStateOf(false) }
     when (status) {
-        is SessionStatus.Authenticated, is SessionStatus.RefreshFailure -> MainNav()
-        is SessionStatus.NotAuthenticated -> LoginScreen()
+        is SessionStatus.Authenticated, is SessionStatus.RefreshFailure -> signedIn = true
+        is SessionStatus.NotAuthenticated -> signedIn = false
+        else -> Unit
+    }
+    when {
+        signedIn -> MainNav()
+        status is SessionStatus.NotAuthenticated -> LoginScreen()
         else -> SplashScreen()
     }
 }
